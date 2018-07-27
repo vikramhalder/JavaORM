@@ -2,16 +2,24 @@ package com.github.vikramhalder.Example;
 
 import com.github.vikramhalder.JavaORM.Annotations.*;
 
+import java.util.Date;
+
+
 public class Ent {
     @AutoIncrement
     @PK
-    @Coloum(name = "id")
+    @Coloum("id")
     private int ids;
     @NotNull
     private String name;
     @NotNull
     @Unique
     private String email;
+
+    @Default("CURRENT_TIMESTAMP")
+    private Date date;
+    @ForeignKey
+    private Person person;
 
     public int getId() {
         return ids;

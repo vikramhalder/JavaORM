@@ -5,7 +5,7 @@ public class DBConfig {
     private String port;
     private String username;
     private String password;
-    private Boolean viewQuery=true;
+    private Boolean viewQuery=false;
     public String getHost() {
         return host;
     }

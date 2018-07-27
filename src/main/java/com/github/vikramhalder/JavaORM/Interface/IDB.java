@@ -1,13 +1,15 @@
-package  com.github.vikramhalder.JavaORM;
+package com.github.vikramhalder.JavaORM.Interface;
+
+import com.github.vikramhalder.JavaORM.DBInsert;
 
 import java.util.ArrayList;
 
 public interface IDB<T> {
-
-     int onCreateDB(String db_name);
      boolean onCreateTable();
-     boolean insert(T t);
+     DBInsert insert(T t);
      boolean insert(ArrayList<T> tArrayList);
+     boolean delete(T t);
+     boolean delete(String coloum, String value);
      ArrayList<T> getAll();
      T getByPK(Object pk);
      T getFirstOrDefault(String where, String select);

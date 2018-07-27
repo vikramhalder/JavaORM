@@ -1,4 +1,5 @@
-package  com.github.vikramhalder.JavaORM.Annotations;
+package com.github.vikramhalder.JavaORM.Annotations;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -6,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface UnMap {
-    public String NotColoum() default "UnMap";
+public @interface ForeignKey {
+    public String PK() default "";
 }

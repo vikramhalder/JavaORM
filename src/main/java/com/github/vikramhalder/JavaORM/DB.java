@@ -1,8 +1,7 @@
 package  com.github.vikramhalder.JavaORM;
 
-import com.github.vikramhalder.JavaORM.Annotations.Coloum;
-import com.github.vikramhalder.JavaORM.Annotations.PK;
 import com.github.vikramhalder.JavaORM.Error.NotNullException;
+import com.github.vikramhalder.JavaORM.Interface.IDB;
 
 import java.lang.reflect.Field;
 import java.sql.*;
@@ -10,20 +9,20 @@ import java.util.ArrayList;
 
 public class DB<T> implements IDB<T> {
     private static final int DATABASE_VERSION = 1;
-    private String DB_CONTACTS ;
-    private String TABLE_CONTACTS ;
-    private ArrayList<DbField> KEYS;
+    private String databasename; ;
+    private String tablename ;
+    private DBTable DB_TABLE;
     private Class<T> entityclass;
     private T entity,entity_temp;
     private String pk_id=null;
     private DBConfig dbConfig;
 
-    public DB(Class<T> entityclass, String DB_CONTACTS, String TABLE_CONTACTS) {
-        this.DB_CONTACTS= DB_CONTACTS;
-        this.TABLE_CONTACTS= TABLE_CONTACTS;
-        this.KEYS= DbCore.getFieldsName(entityclass);
+    public DB(Class<T> entityclass, String databasename) {
+        this.databasename= databasename;
+        this.DB_TABLE= DBCore.getDBTable(entityclass);
         this.entityclass=entityclass;
         try {
+            this.tablename=DB_TABLE.classname.mapname;
             this.entity = entityclass.newInstance();
             this.entity_temp=entity;
         }catch (Exception ex){
@@ -35,105 +34,109 @@ public class DB<T> implements IDB<T> {
         this.dbConfig=dbConfig;
         return this;
     }
-    @Override
-    public int onCreateDB(String db_name) {
-        if(dbConfig.getViewQuery())
-            System.out.println("CREATE DATABASE "+db_name);
-        try{
-            Class.forName("com.mysql.jdbc.Driver");
-            Connection con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort(),dbConfig.getUsername(),dbConfig.getPassword());
-            Statement statement =con.createStatement();
-            int Result=statement.executeUpdate("CREATE DATABASE "+db_name);
-            con.close();
-            return Result>0?1:0;
-        }catch(Exception e){
-            String err=e.toString()+"";
-            if(err.contains("database exists"))
-                return 11;
-            else
-                System.out.println(e);
-        }
-        return 0;
-    }
+    
     @Override
     public boolean onCreateTable(){
-        return tableCreate("","");
+        return tableCreate("",tablename,dbConfig);
     }
-    private boolean tableCreate(String db_name,String table_name){
+
+    private boolean tableCreate(String db_name,String table_name,DBConfig dbConfig){
+
+        ArrayList<DBTable> foreignkey=new ArrayList<>();
         ArrayList<String> unique=new ArrayList<>();
         ArrayList<String> coloums=new ArrayList<>();
         String temp0="";
-        for (DbField dbField:KEYS){
-            if(dbField.fieldName!=null) {
-                if(dbField.pk && dbField.autoincrement) {
-                    pk_id=dbField.fieldName.mapname;
-                    coloums.add(dbField.fieldName.mapname + " int NOT NULL AUTO_INCREMENT");
-                }else if(dbField.pk) {
-                    pk_id=dbField.fieldName.mapname;
-                    coloums.add(dbField.fieldName.mapname + " varchar(255)");
-                }else if(dbField.autoincrement) {
-                    coloums.add(dbField.fieldName.mapname + " int NOT NULL AUTO_INCREMENT");
-                }else if(dbField.qunique) {
-                    unique.add(dbField.fieldName.mapname);
-                    if(dbField.type.equals("int")) {
-                        if (dbField.notNull) {
-                            coloums.add(dbField.fieldName.mapname + " int NOT NULL");
+        for (DBProperty DBProperty : DB_TABLE.properties){
+            if(DBProperty._fieldName!=null) {
+                if(DBProperty._foreignkey!=null){
+                    foreignkey.add(DBProperty._foreignkey);
+                }
+
+                if(DBProperty._pk && DBProperty._autoincrement) {
+                    pk_id= DBProperty._fieldName.mapname;
+                    coloums.add(DBProperty._fieldName.mapname + " int NOT NULL AUTO_INCREMENT");
+                }else if(DBProperty._pk) {
+                    pk_id= DBProperty._fieldName.mapname;
+                    coloums.add(DBProperty._fieldName.mapname + " varchar(255)");
+                }else if(DBProperty._autoincrement) {
+                    coloums.add(DBProperty._fieldName.mapname + " int NOT NULL AUTO_INCREMENT");
+                }else if(DBProperty._qunique) {
+                    unique.add(DBProperty._fieldName.mapname);
+                    if(DBProperty._type.equals("int")) {
+                        if (DBProperty._notNull) {
+                            coloums.add(DBProperty._fieldName.mapname + " int NOT NULL");
                         } else {
-                            coloums.add(dbField.fieldName.mapname + " int");
+                            coloums.add(DBProperty._fieldName.mapname + " int");
+                        }
+                    }else if(DBProperty._type.equals("Date")) {
+                        if(DBProperty._default_value.toUpperCase().equals("CURRENT_TIMESTAMP")) {
+                            coloums.add(DBProperty._fieldName.mapname + " timestamp DEFAULT CURRENT_TIMESTAMP");
+                        }else{
+                            coloums.add(DBProperty._fieldName.mapname + " date");
                         }
                     }
                     else {
-                        if (dbField.notNull) {
-                            coloums.add(dbField.fieldName.mapname + " varchar(255) NOT NULL");
+                        if (DBProperty._notNull) {
+                            coloums.add(DBProperty._fieldName.mapname + " varchar(255) NOT NULL "+(DBProperty._default_value!=null?"default '"+DBProperty._default_value+"'":""));
                         } else {
-                            coloums.add(dbField.fieldName.mapname + " varchar(255)");
+                            coloums.add(DBProperty._fieldName.mapname + " varchar(255) "+(DBProperty._default_value!=null?"default '"+DBProperty._default_value+"'":""));
                         }
                     }
                 }else {
-                    if(dbField.type.equals("int")) {
-                        if (dbField.notNull) {
-                            coloums.add(dbField.fieldName.mapname + " int NOT NULL");
+                    if(DBProperty._type.equals("int")) {
+                        if (DBProperty._notNull) {
+                            coloums.add(DBProperty._fieldName.mapname + " int NOT NULL");
                         } else {
-                            coloums.add(dbField.fieldName.mapname + " int");
+                            coloums.add(DBProperty._fieldName.mapname + " int ");
                         }
-                    }
-                    else {
-                        if (dbField.notNull) {
-                            coloums.add(dbField.fieldName.mapname + " varchar(255) NOT NULL");
+                    }else if(DBProperty._type.toLowerCase().equals("date")) {
+                        if(DBProperty._default_value.toUpperCase().equals("CURRENT_TIMESTAMP")) {
+                            coloums.add(DBProperty._fieldName.mapname + " timestamp DEFAULT CURRENT_TIMESTAMP");
+                        }else{
+                            coloums.add(DBProperty._fieldName.mapname + " date");
+                        }
+                    }else {
+                        if (DBProperty._notNull) {
+                            coloums.add(DBProperty._fieldName.mapname + " varchar(255) NOT NULL "+(DBProperty._default_value!=null?"default '"+DBProperty._default_value+"'":""));
                         } else {
-                            coloums.add(dbField.fieldName.mapname + " varchar(255)");
+                            coloums.add(DBProperty._fieldName.mapname + " varchar(255) "+(DBProperty._default_value!=null?"default ''"+DBProperty._default_value+"'"+"'":""));
                         }
                     }
                 }
             }
         }
+        System.out.println(foreignkey.size());
         String CREATE_CONTACTS_TABLE = "";
         if(pk_id!=null){
             if(unique.size()>0){
                 CREATE_CONTACTS_TABLE=
-                        "CREATE TABLE IF NOT EXISTS " + TABLE_CONTACTS + "("+
-                                "   "+String.join(",",coloums)+","+
-                                "   PRIMARY KEY ("+pk_id+"),"+
-                                "   UNIQUE KEY ("+String.join(",",unique)+")" +
+                        "CREATE TABLE IF NOT EXISTS " + table_name + "(\n"+
+                                "   "+String.join(",",coloums)+",\n"+
+                                "   PRIMARY KEY ("+pk_id+"),\n"+
+                                "   "+(DBCore.getFKey(foreignkey, dbConfig,databasename)!=null?DBCore.getFKey(foreignkey, dbConfig,databasename)+"\n":"")+
+                                "   UNIQUE KEY ("+String.join(",",unique)+")\n" +
                                 ");";
             }else {
                 CREATE_CONTACTS_TABLE=
-                        "CREATE TABLE IF NOT EXISTS " + TABLE_CONTACTS + "("+
-                                "   "+String.join(",",coloums)+","+
-                                "   PRIMARY KEY ("+pk_id+")"+
+                        "CREATE TABLE IF NOT EXISTS " + table_name + "(\n"+
+                                "   "+String.join(",",coloums)+",\n"+
+                                "   "+(DBCore.getFKey(foreignkey, dbConfig,databasename)!=null?DBCore.getFKey(foreignkey, dbConfig,databasename)+"\n":"")+
+                                "   PRIMARY KEY ("+pk_id+")\n"+
                                 ");";
             }
         }else {
             if(unique.size()>0){
                 CREATE_CONTACTS_TABLE=
-                        "CREATE TABLE IF NOT EXISTS " + TABLE_CONTACTS + "("+
-                                "   "+String.join(",",coloums)+","+
-                                "   UNIQUE KEY ("+String.join(",",unique)+")" +
+                        "CREATE TABLE IF NOT EXISTS " + table_name + "(\n"+
+                                "   "+String.join(",",coloums)+",\n"+
+                                "   "+(DBCore.getFKey(foreignkey, dbConfig,databasename)!=null?DBCore.getFKey(foreignkey, dbConfig,databasename)+"\n":"")+
+                                "   UNIQUE KEY ("+String.join(",",unique)+")\n" +
                                 ");";
             }else {
                 CREATE_CONTACTS_TABLE=
-                        "CREATE TABLE IF NOT EXISTS " + TABLE_CONTACTS + "("+
-                                "   "+String.join(",",coloums)+","+
+                        "CREATE TABLE IF NOT EXISTS " + table_name + "(\n"+
+                                "   "+String.join(",",coloums)+",\n"+
+                                "   "+(DBCore.getFKey(foreignkey,dbConfig,databasename)!=null?DBCore.getFKey(foreignkey,dbConfig,databasename)+"\n":"")+
                                 ");";
             }
         }
@@ -146,7 +149,7 @@ public class DB<T> implements IDB<T> {
         Connection con=null;
         try{
             Class.forName("com.mysql.jdbc.Driver");
-            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+DB_CONTACTS,dbConfig.getUsername(),dbConfig.getPassword());
+            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+databasename,dbConfig.getUsername(),dbConfig.getPassword());
             stmt =con.createStatement();
             stmt.execute(CREATE_CONTACTS_TABLE);
         }catch(Exception e){
@@ -165,27 +168,37 @@ public class DB<T> implements IDB<T> {
         }
         return ret;
     }
+
     @Override
-    public boolean insert(T getEntity) {
+    public DBInsert insert(T getEntity) {
+        DBInsert dbInsert=new DBInsert();
         boolean notnull=false;
         ArrayList<String> coloums=new ArrayList<>();
         ArrayList<String> values=new ArrayList<>();
 
         for(Field field:getEntity.getClass().getDeclaredFields())
         {
+            ArrayList<DBTable> foreignkey=new ArrayList<>();
             field.setAccessible(true);
-            for(DbField dbField:KEYS){
-                if(dbField.fieldName!=null) {
-                    if (dbField.fieldName.realname.equals(field.getName())) {
+            for(DBProperty DBProperty :DB_TABLE.properties){
+                if(DBProperty._fieldName!=null) {
+                    if (DBProperty._fieldName.realname.equals(field.getName())) {
                         try {
-                            if(!dbField.autoincrement) {
+                            if(!DBProperty._autoincrement) {
                                 if(field.get(getEntity)!=null) {
-                                    coloums.add(dbField.fieldName.mapname);
-                                    values.add("'" + (String.valueOf(field.get(getEntity)) != null ? field.get(getEntity) + "" : "NULL").replace("'", "''") + "'");
-                                }else{
-                                    if(dbField.notNull){
+                                    coloums.add(DBProperty._fieldName.mapname);
+                                    if(DBProperty._foreignkey!=null){
+                                        foreignkey.add(DBProperty._foreignkey);
+                                        for(DBProperty fdb_property:DBProperty._foreignkey.properties){
+                                            DBInsert dbInsert1=insert((T) DBProperty._value.getClass());
+                                        }
+                                    }else {
+                                        values.add("'" + (String.valueOf(field.get(getEntity)) != null ? field.get(getEntity) + "" : "NULL").replace("'", "''") + "'");
+                                    }
+                                    }else{
+                                    if(DBProperty._notNull){
                                         notnull=true;
-                                        throw new NotNullException(dbField.fieldName.realname+"  null value not support");
+                                        throw new NotNullException(DBProperty._fieldName.realname+"  null value not support");
                                     }
                                 }
                             }
@@ -199,7 +212,7 @@ public class DB<T> implements IDB<T> {
 
         boolean ret=false;
         if(!notnull) {
-            String sql = "insert into " + TABLE_CONTACTS + "(" + String.join(",", coloums) + ") values " + "(" + String.join(",", values) + ")";
+            String sql = "insert into " + tablename + "(" + String.join(",", coloums) + ") values " + "(" + String.join(",", values) + ")";
             sql = sql.replace("'null'", "NULL");
             if (dbConfig.getViewQuery())
                 System.out.println(sql);
@@ -208,7 +221,7 @@ public class DB<T> implements IDB<T> {
             Connection con = null;
             try {
                 Class.forName("com.mysql.jdbc.Driver");
-                con = DriverManager.getConnection("jdbc:mysql://" + dbConfig.getHost() + ":" + dbConfig.getPort() + "/" + DB_CONTACTS, dbConfig.getUsername(), dbConfig.getPassword());
+                con = DriverManager.getConnection("jdbc:mysql://" + dbConfig.getHost() + ":" + dbConfig.getPort() + "/" + databasename, dbConfig.getUsername(), dbConfig.getPassword());
                 preparedStatement = con.prepareStatement(sql);
                 preparedStatement.execute();
             } catch (Exception e) {
@@ -217,8 +230,19 @@ public class DB<T> implements IDB<T> {
                 try {
                     if (con != null) {
                         if (preparedStatement != null) {
-                            ret = true;
-                            con.close();
+                            try {
+                                ResultSet tableKeys = preparedStatement.getGeneratedKeys();
+                                tableKeys.next();
+                                int autoGeneratedID = tableKeys.getInt(1);
+                                dbInsert.setOk(true);
+                                dbInsert.setId(autoGeneratedID);
+                                con.close();
+                            }catch (Exception ex){
+                                dbInsert.setOk(true);
+                                dbInsert.setId(0);
+                                dbInsert.setMessage("Insert successfull. But failed to get generated keys");
+                                con.close();
+                            }
                         }
                     }
                 } catch (SQLException se) {
@@ -226,7 +250,7 @@ public class DB<T> implements IDB<T> {
                 }
             }
         }
-        return ret;
+        return dbInsert;
     }
     @Override
     public boolean insert(ArrayList<T> tArrayList) {
@@ -240,21 +264,21 @@ public class DB<T> implements IDB<T> {
         for(T getEntity:tArrayList ) {
             for (Field field : getEntity.getClass().getDeclaredFields()) {
                 field.setAccessible(true);
-                for (DbField dbField : KEYS) {
-                    if (dbField.fieldName != null) {
-                        if (dbField.fieldName.realname.equals(field.getName())) {
+                for (DBProperty DBProperty : DB_TABLE.properties) {
+                    if (DBProperty._fieldName != null) {
+                        if (DBProperty._fieldName.realname.equals(field.getName())) {
                             try {
-                                if (!dbField.autoincrement) {
+                                if (!DBProperty._autoincrement) {
                                     if(field.get(getEntity)!=null) {
                                         if (count == 0) {
-                                            coloums.add(dbField.fieldName.mapname);
+                                            coloums.add(DBProperty._fieldName.mapname);
                                         }
                                         values.add("'" + (String.valueOf(field.get(getEntity)) != null ? field.get(getEntity) + "" : "NULL").replace("'", "''") + "'");
                                         insert++;
                                     }else{
-                                        if(dbField.notNull){
+                                        if(DBProperty._notNull){
                                             notnull=true;
-                                            Error(dbField.fieldName.realname+" null value not support");
+                                            Error(DBProperty._fieldName.realname+" null value not support");
                                         }
                                     }
                                 }
@@ -272,7 +296,7 @@ public class DB<T> implements IDB<T> {
 
         boolean ret = false;
         if(!notnull) {
-            String sql = "insert into " + TABLE_CONTACTS + "(" + String.join(",", coloums) + ") values " + String.join(",", values_list);
+            String sql = "insert into " + tablename + "(" + String.join(",", coloums) + ") values " + String.join(",", values_list);
             sql = sql.replace("'null'", "NULL");
             if (dbConfig.getViewQuery())
                 System.out.println(sql);
@@ -281,7 +305,7 @@ public class DB<T> implements IDB<T> {
             Connection con = null;
             try {
                 Class.forName("com.mysql.jdbc.Driver");
-                con = DriverManager.getConnection("jdbc:mysql://" + dbConfig.getHost() + ":" + dbConfig.getPort() + "/" + DB_CONTACTS, dbConfig.getUsername(), dbConfig.getPassword());
+                con = DriverManager.getConnection("jdbc:mysql://" + dbConfig.getHost() + ":" + dbConfig.getPort() + "/" + databasename, dbConfig.getUsername(), dbConfig.getPassword());
                 preparedStatement = con.prepareStatement(sql);
                 preparedStatement.execute();
                 System.out.println("JavaORM: insert row " + insert);
@@ -303,15 +327,29 @@ public class DB<T> implements IDB<T> {
         return ret;
     }
     @Override
+    public boolean delete(String coloum, String value) {
+        String sql = "delete from "+tablename+" where "+coloum+" = "+"'"+value+"'";
+        return preparedStatement(sql);
+    }
+    @Override
+    public boolean delete(T getEntity) {
+        try{
+            String sql = "delete from "+tablename+" where "+DBCore.getPkAndVal(DBCore.getDBTable(entityclass));
+            return preparedStatement(sql);
+        }catch (Exception ex) {
+            return false;
+        }
+    }
+    @Override
     public ArrayList<T> getAll() {
         ArrayList<T> tArrayList=new ArrayList<>();
-        String selectQuery = "SELECT  * FROM " + TABLE_CONTACTS;
+        String selectQuery = "SELECT  * FROM " +  DB_TABLE.properties;
         Statement  statement=null;
         Connection con=null;
         ResultSet rs=null;
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+DB_CONTACTS,dbConfig.getUsername(),dbConfig.getPassword());
+            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+databasename,dbConfig.getUsername(),dbConfig.getPassword());
             statement = con.createStatement();
             rs = statement.executeQuery(selectQuery);
             while (rs.next()) {
@@ -320,11 +358,11 @@ public class DB<T> implements IDB<T> {
                 Field[] declaredFields = tentity.getClass().getDeclaredFields();
                 for (Field field : declaredFields) {
                     field.setAccessible(true);
-                    for (DbField dbField : KEYS) {
-                        if (dbField.fieldName != null) {
-                            if (dbField.fieldName.realname.equals(field.getName())) {
+                    for (DBProperty DBProperty :  DB_TABLE.properties) {
+                        if (DBProperty._fieldName != null) {
+                            if (DBProperty._fieldName.realname.equals(field.getName())) {
                                 try {
-                                    Object o=DbCore.CastType(field.getType().getSimpleName(), rs.getString(dbField.fieldName.mapname));
+                                    Object o=DBCore.CastType(field.getType().getSimpleName(), rs.getString(DBProperty._fieldName.mapname));
                                     field.set(tentity, o);
                                 } catch (Exception esx) {
                                     try {
@@ -357,7 +395,7 @@ public class DB<T> implements IDB<T> {
         ResultSet rs=null;
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+DB_CONTACTS,dbConfig.getUsername(),dbConfig.getPassword());
+            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+databasename,dbConfig.getUsername(),dbConfig.getPassword());
             statement = con.createStatement();
             rs = statement.executeQuery(selectQuery);
             while (rs.next()) {
@@ -366,11 +404,11 @@ public class DB<T> implements IDB<T> {
                 Field[] declaredFields = tentity.getClass().getDeclaredFields();
                 for (Field field : declaredFields) {
                     field.setAccessible(true);
-                    for (DbField dbField : KEYS) {
-                        if (dbField.fieldName != null) {
-                            if (dbField.fieldName.realname.equals(field.getName())) {
+                    for (DBProperty DBProperty :  DB_TABLE.properties) {
+                        if (DBProperty._fieldName != null) {
+                            if (DBProperty._fieldName.realname.equals(field.getName())) {
                                 try {
-                                    Object o=DbCore.CastType(field.getType().getSimpleName(), rs.getString(dbField.fieldName.mapname));
+                                    Object o=DBCore.CastType(field.getType().getSimpleName(), rs.getString(DBProperty._fieldName.mapname));
                                     field.set(tentity, o);
                                 } catch (Exception esx) {
                                     try {
@@ -393,10 +431,10 @@ public class DB<T> implements IDB<T> {
 
     @Override
     public T getByPK(Object pk) {
-        for (DbField dbField:KEYS) {
-            if (dbField.fieldName != null) {
-                if (dbField.pk && dbField.autoincrement) {
-                    pk_id = dbField.fieldName.mapname;
+        for (DBProperty DBProperty : DB_TABLE.properties) {
+            if (DBProperty._fieldName != null) {
+                if (DBProperty._pk && DBProperty._autoincrement) {
+                    pk_id = DBProperty._fieldName.mapname;
                 }
             }
         }
@@ -405,11 +443,11 @@ public class DB<T> implements IDB<T> {
         Connection con=null;
         ResultSet rs=null;
         try {
-            String selectQuery = "SELECT  * FROM " + TABLE_CONTACTS+" where "+pk_id+"='"+pk+"'";
+            String selectQuery = "SELECT  * FROM " + tablename+" where "+pk_id+"='"+pk+"'";
             if(dbConfig.getViewQuery())
                 System.out.println(selectQuery);
             Class.forName("com.mysql.jdbc.Driver");
-            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+DB_CONTACTS,dbConfig.getUsername(),dbConfig.getPassword());
+            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+databasename,dbConfig.getUsername(),dbConfig.getPassword());
             statement = con.createStatement();
             rs = statement.executeQuery(selectQuery);
             while (rs.next()) {
@@ -417,13 +455,13 @@ public class DB<T> implements IDB<T> {
                 for(Field field:declaredFields)
                 {
                     field.setAccessible(true);
-                    for(DbField dbField:KEYS) {
-                        if(dbField.fieldName!=null) {
-                            if (dbField.fieldName.realname.equals(field.getName())) {
+                    for(DBProperty DBProperty : DB_TABLE.properties) {
+                        if(DBProperty._fieldName!=null) {
+                            if (DBProperty._fieldName.realname.equals(field.getName())) {
                                 for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
-                                    if (dbField.fieldName.realname.equals(field.getName())) {
+                                    if (DBProperty._fieldName.realname.equals(field.getName())) {
                                         try {
-                                            field.set(tentity, DbCore.CastType(field.getType().getSimpleName(), rs.getString(dbField.fieldName.mapname)));
+                                            field.set(tentity, DBCore.CastType(field.getType().getSimpleName(), rs.getString(DBProperty._fieldName.mapname)));
                                         } catch (Exception esx) {
                                             try {
                                                 field.set(tentity, null);
@@ -452,11 +490,11 @@ public class DB<T> implements IDB<T> {
         Connection con=null;
         ResultSet rs=null;
         try {
-            String selectQuery = "SELECT  "+select+" FROM " + TABLE_CONTACTS+" where "+where;
+            String selectQuery = "SELECT  "+select+" FROM " + tablename+" where "+where;
             if(dbConfig.getViewQuery())
                 System.out.println(selectQuery);
             Class.forName("com.mysql.jdbc.Driver");
-            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+DB_CONTACTS,dbConfig.getUsername(),dbConfig.getPassword());
+            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+databasename,dbConfig.getUsername(),dbConfig.getPassword());
             statement = con.createStatement();
             rs = statement.executeQuery(selectQuery);
             while (rs.next()) {
@@ -464,13 +502,13 @@ public class DB<T> implements IDB<T> {
                 for(Field field:declaredFields)
                 {
                     field.setAccessible(true);
-                    for(DbField dbField:KEYS) {
-                        if(dbField.fieldName!=null) {
-                            if (dbField.fieldName.realname.equals(field.getName())) {
+                    for(DBProperty DBProperty : DB_TABLE.properties) {
+                        if(DBProperty._fieldName!=null) {
+                            if (DBProperty._fieldName.realname.equals(field.getName())) {
                                 for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
-                                    if (dbField.fieldName.realname.equals(field.getName())) {
+                                    if (DBProperty._fieldName.realname.equals(field.getName())) {
                                         try {
-                                            field.set(tentity, DbCore.CastType(field.getType().getSimpleName(), rs.getString(dbField.fieldName.mapname)));
+                                            field.set(tentity, DBCore.CastType(field.getType().getSimpleName(), rs.getString(DBProperty._fieldName.mapname)));
                                         } catch (Exception esx) {
                                             try {
                                                 field.set(tentity, null);
@@ -501,20 +539,20 @@ public class DB<T> implements IDB<T> {
         for(Field field:getEntity.getClass().getDeclaredFields())
         {
             field.setAccessible(true);
-            for(DbField dbField:KEYS){
-                if(dbField.fieldName!=null) {
-                    if (dbField.fieldName.realname.equals(field.getName())) {
+            for(DBProperty DBProperty : DB_TABLE.properties){
+                if(DBProperty._fieldName!=null) {
+                    if (DBProperty._fieldName.realname.equals(field.getName())) {
                         try {
-                            if(dbField.pk){
-                                pk = dbField.fieldName.mapname+" = '"+((String.valueOf(field.get(getEntity)) != null ? field.get(getEntity) + "" : "NULL").replace("'", "''"))+"'";
+                            if(DBProperty._pk){
+                                pk = DBProperty._fieldName.mapname+" = '"+((String.valueOf(field.get(getEntity)) != null ? field.get(getEntity) + "" : "NULL").replace("'", "''"))+"'";
                             }
-                            if(!dbField.autoincrement) {
+                            if(!DBProperty._autoincrement) {
                                 if(field.get(getEntity)!=null) {
-                                    set_value.add(dbField.fieldName.mapname + " = '" + ((String.valueOf(field.get(getEntity)) != null ? field.get(getEntity) + "" : "").replace("'", "''")) + "'");
+                                    set_value.add(DBProperty._fieldName.mapname + " = '" + ((String.valueOf(field.get(getEntity)) != null ? field.get(getEntity) + "" : "").replace("'", "''")) + "'");
                                 }else{
-                                    if(dbField.notNull){
+                                    if(DBProperty._notNull){
                                         notnull=true;
-                                        Error(dbField.fieldName.realname+" null value not support");
+                                        Error(DBProperty._fieldName.realname+" null value not support");
                                     }
                                 }
                             }
@@ -528,14 +566,14 @@ public class DB<T> implements IDB<T> {
 
         boolean ret=false;
         if(!notnull) {
-            String sql = "UPDATE " + TABLE_CONTACTS + " SET " + String.join(",", set_value) + " WHERE " + pk;
+            String sql = "UPDATE " + tablename + " SET " + String.join(",", set_value) + " WHERE " + pk;
             ;
 
             PreparedStatement preparedStatement = null;
             Connection con = null;
             try {
                 Class.forName("com.mysql.jdbc.Driver");
-                con = DriverManager.getConnection("jdbc:mysql://" + dbConfig.getHost() + ":" + dbConfig.getPort() + "/" + DB_CONTACTS, dbConfig.getUsername(), dbConfig.getPassword());
+                con = DriverManager.getConnection("jdbc:mysql://" + dbConfig.getHost() + ":" + dbConfig.getPort() + "/" + databasename, dbConfig.getUsername(), dbConfig.getPassword());
                 preparedStatement = con.prepareStatement(sql);
                 preparedStatement.execute();
             } catch (Exception e) {
@@ -565,7 +603,7 @@ public class DB<T> implements IDB<T> {
         Connection con=null;
         try{
             Class.forName("com.mysql.jdbc.Driver");
-            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+DB_CONTACTS,dbConfig.getUsername(),dbConfig.getPassword());
+            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+databasename,dbConfig.getUsername(),dbConfig.getPassword());
             preparedStatement =con.prepareStatement(sql);
             preparedStatement.execute();
         }catch(Exception e){
@@ -594,7 +632,7 @@ public class DB<T> implements IDB<T> {
         Connection con=null;
         try{
             Class.forName("com.mysql.jdbc.Driver");
-            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+DB_CONTACTS,dbConfig.getUsername(),dbConfig.getPassword());
+            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+databasename,dbConfig.getUsername(),dbConfig.getPassword());
             stmt =con.createStatement();
             stmt.execute(sql);
         }catch(Exception e){

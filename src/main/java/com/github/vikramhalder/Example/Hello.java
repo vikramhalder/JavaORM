@@ -1,14 +1,26 @@
 package com.github.vikramhalder.Example;
 
 import com.github.vikramhalder.JavaORM.DB;
-import com.github.vikramhalder.JavaORM.IDB;
-
-import java.util.ArrayList;
-import java.util.Date;
+import com.github.vikramhalder.JavaORM.DBInsert;
+import com.github.vikramhalder.JavaORM.Interface.IDB;
 
 public class Hello{
     public static void main(String[] args){
-        IDB<Ent> entDB=new DB<Ent>(Ent.class,"java_orm","Ent").Config(DBConn.dbConfig());
+        IDB<Ent> entDB=new DB<Ent>(Ent.class,"java_orm").Config(DBConn.dbConfig());
+
+        //System.out.println(entDB.onCreateTable());
+
+        Ent e=new Ent();
+        e.setName("dip");
+        e.setEmail("dip@g.c");
+
+        Person p=new Person();
+        p.setName("Vik");
+        DBInsert dbInsert= entDB.insert(e);
+
+        System.out.println(dbInsert.isOk());
+        System.out.println(dbInsert.getId());
+        System.out.println(dbInsert.getMessage());
 
 //        entDB.onCreateDB("java_orm");
 
