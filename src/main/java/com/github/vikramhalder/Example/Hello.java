@@ -1,26 +1,31 @@
 package com.github.vikramhalder.Example;
 
 import com.github.vikramhalder.JavaORM.DB;
+import com.github.vikramhalder.JavaORM.DBConfig;
 import com.github.vikramhalder.JavaORM.DBInsert;
+import com.github.vikramhalder.JavaORM.DBUser;
 import com.github.vikramhalder.JavaORM.Interface.IDB;
+import com.github.vikramhalder.JavaORM.Interface.IDBUser;
 
 public class Hello{
     public static void main(String[] args){
+        IDBUser idbUser=new DBUser();
         IDB<Ent> entDB=new DB<Ent>(Ent.class,"java_orm").Config(DBConn.dbConfig());
 
-        //System.out.println(entDB.onCreateTable());
+//        System.out.println(idbUser.onCreateDB(DBConn.dbConfig(),"java_orm"));
+        System.out.println(entDB.onCreateTable());
 
-        Ent e=new Ent();
-        e.setName("dip");
-        e.setEmail("dip@g.c");
-
-        Person p=new Person();
-        p.setName("Vik");
-        DBInsert dbInsert= entDB.insert(e);
-
-        System.out.println(dbInsert.isOk());
-        System.out.println(dbInsert.getId());
-        System.out.println(dbInsert.getMessage());
+//        Ent e=new Ent();
+//        e.setName("dip");
+//        e.setEmail("di/p@g.c");
+//
+//        Person p=new Person();
+//        p.setName("Vik");
+//        DBInsert dbInsert= entDB.insert(e);
+//
+//        System.out.println(dbInsert.isOk());
+//        System.out.println(dbInsert.getId());
+//        System.out.println(dbInsert.getMessage());
 
 //        entDB.onCreateDB("java_orm");
 

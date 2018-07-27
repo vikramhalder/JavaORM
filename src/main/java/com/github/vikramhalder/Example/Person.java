@@ -1,11 +1,13 @@
 package com.github.vikramhalder.Example;
 
+import com.github.vikramhalder.JavaORM.Annotations.AutoIncrement;
 import com.github.vikramhalder.JavaORM.Annotations.Coloum;
 import com.github.vikramhalder.JavaORM.Annotations.ForeignKey;
 import com.github.vikramhalder.JavaORM.Annotations.PK;
 
 
 public class Person {
+    @AutoIncrement
     @PK
     private int id;
 
@@ -13,6 +15,12 @@ public class Person {
     @ForeignKey
     @Coloum("dbconn")
     private DBConn area;
+
+
+
+
+
+
 
     public String getName() {
         return name;

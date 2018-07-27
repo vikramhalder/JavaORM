@@ -16,6 +16,7 @@ public class Ent {
     @Unique
     private String email;
 
+    @ColumnType("timestamp")
     @Default("CURRENT_TIMESTAMP")
     private Date date;
     @ForeignKey

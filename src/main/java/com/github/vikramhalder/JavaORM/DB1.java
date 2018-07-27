@@ -1,9 +1,5 @@
-package  com.github.vikramhalder.JavaORM;
+package com.github.vikramhalder.JavaORM;
 
-import com.github.vikramhalder.JavaORM.DBCore;
-import com.github.vikramhalder.JavaORM.DBProperty;
-import com.github.vikramhalder.JavaORM.DBTable;
-import com.github.vikramhalder.JavaORM.Entity;
 import com.github.vikramhalder.JavaORM.Error.NotNullException;
 import com.github.vikramhalder.JavaORM.Interface.IDB;
 
@@ -11,22 +7,22 @@ import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.ArrayList;
 
-public class DB<T> implements IDB<T> {
-    private static final int DATABASE_VERSION = 1;
+public class DB1<T> {
+    /*private static final int DATABASE_VERSION = 1;
     private String databasename; ;
     private String tablename ;
-    private TableValue tableValue;
+    private DBTable DB_TABLE;
     private Class<T> entityclass;
     private T entity,entity_temp;
-    private Item pk_id=null;
+    private String pk_id=null;
     private DBConfig dbConfig;
 
-    public DB(Class<T> entityclass, String databasename) {
+    public DB1(Class<T> entityclass, String databasename) {
         this.databasename= databasename;
-        this.tableValue= DBCore.getTableValue(entityclass);
+        this.DB_TABLE= DBCore.getDBTable(entityclass);
         this.entityclass=entityclass;
         try {
-            this.tablename=tableValue.table_name.mapname;
+            this.tablename=DB_TABLE.classname.mapname;
             this.entity = entityclass.newInstance();
             this.entity_temp=entity;
         }catch (Exception ex){
@@ -34,18 +30,145 @@ public class DB<T> implements IDB<T> {
         }
     }
 
-    public DB Config(DBConfig dbConfig){
+    public DB1 Config(DBConfig dbConfig){
         this.dbConfig=dbConfig;
         return this;
     }
     
     @Override
     public boolean onCreateTable(){
-        return DBCreate.tableCreate(databasename,tableValue,dbConfig);
+        return tableCreate("",tablename,dbConfig);
     }
 
+    private boolean tableCreate(String db_name,String table_name,DBConfig dbConfig){
 
-/*
+        ArrayList<DBTable> foreignkey=new ArrayList<>();
+        ArrayList<String> unique=new ArrayList<>();
+        ArrayList<String> coloums=new ArrayList<>();
+        String temp0="";
+        for (com.github.vikramhalder.JavaORM.DBProperty DBProperty : DB_TABLE.properties){
+            if(DBProperty._fieldName!=null) {
+                if(DBProperty._foreignkey!=null){
+                    foreignkey.add(DBProperty._foreignkey);
+                }
+
+                if(DBProperty._pk && DBProperty._autoincrement) {
+                    pk_id= DBProperty._fieldName.mapname;
+                    coloums.add(DBProperty._fieldName.mapname + " int NOT NULL AUTO_INCREMENT");
+                }else if(DBProperty._pk) {
+                    pk_id= DBProperty._fieldName.mapname;
+                    coloums.add(DBProperty._fieldName.mapname + " varchar(255)");
+                }else if(DBProperty._autoincrement) {
+                    coloums.add(DBProperty._fieldName.mapname + " int NOT NULL AUTO_INCREMENT");
+                }else if(DBProperty._qunique) {
+                    unique.add(DBProperty._fieldName.mapname);
+                    if(DBProperty._type.equals("int")) {
+                        if (DBProperty._notNull) {
+                            coloums.add(DBProperty._fieldName.mapname + " int NOT NULL");
+                        } else {
+                            coloums.add(DBProperty._fieldName.mapname + " int");
+                        }
+                    }else if(DBProperty._type.equals("Date")) {
+                        if(DBProperty._default.toUpperCase().equals("CURRENT_TIMESTAMP")) {
+                            coloums.add(DBProperty._fieldName.mapname + " timestamp DEFAULT CURRENT_TIMESTAMP");
+                        }else{
+                            coloums.add(DBProperty._fieldName.mapname + " date");
+                        }
+                    }
+                    else {
+                        if (DBProperty._notNull) {
+                            coloums.add(DBProperty._fieldName.mapname + " varchar(255) NOT NULL "+(DBProperty._default!=null?"default '"+DBProperty._default+"'":""));
+                        } else {
+                            coloums.add(DBProperty._fieldName.mapname + " varchar(255) "+(DBProperty._default!=null?"default '"+DBProperty._default+"'":""));
+                        }
+                    }
+                }else {
+                    if(DBProperty._type.equals("int")) {
+                        if (DBProperty._notNull) {
+                            coloums.add(DBProperty._fieldName.mapname + " int NOT NULL");
+                        } else {
+                            coloums.add(DBProperty._fieldName.mapname + " int ");
+                        }
+                    }else if(DBProperty._type.toLowerCase().equals("date")) {
+                        if(DBProperty._default.toUpperCase().equals("CURRENT_TIMESTAMP")) {
+                            coloums.add(DBProperty._fieldName.mapname + " timestamp DEFAULT CURRENT_TIMESTAMP");
+                        }else{
+                            coloums.add(DBProperty._fieldName.mapname + " date");
+                        }
+                    }else {
+                        if (DBProperty._notNull) {
+                            coloums.add(DBProperty._fieldName.mapname + " varchar(255) NOT NULL "+(DBProperty._default!=null?"default '"+DBProperty._default+"'":""));
+                        } else {
+                            coloums.add(DBProperty._fieldName.mapname + " varchar(255) "+(DBProperty._default!=null?"default ''"+DBProperty._default+"'"+"'":""));
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println(foreignkey.size());
+        String CREATE_CONTACTS_TABLE = "";
+        if(pk_id!=null){
+            if(unique.size()>0){
+                CREATE_CONTACTS_TABLE=
+                        "CREATE TABLE IF NOT EXISTS " + table_name + "(\n"+
+                                "   "+String.join(",",coloums)+",\n"+
+                                "   PRIMARY KEY ("+pk_id+"),\n"+
+                                "   "+(DBCore.getFKey(foreignkey, dbConfig,databasename)!=null?DBCore.getFKey(foreignkey, dbConfig,databasename)+"\n":"")+
+                                "   UNIQUE KEY ("+String.join(",",unique)+")\n" +
+                                ");";
+            }else {
+                CREATE_CONTACTS_TABLE=
+                        "CREATE TABLE IF NOT EXISTS " + table_name + "(\n"+
+                                "   "+String.join(",",coloums)+",\n"+
+                                "   "+(DBCore.getFKey(foreignkey, dbConfig,databasename)!=null?DBCore.getFKey(foreignkey, dbConfig,databasename)+"\n":"")+
+                                "   PRIMARY KEY ("+pk_id+")\n"+
+                                ");";
+            }
+        }else {
+            if(unique.size()>0){
+                CREATE_CONTACTS_TABLE=
+                        "CREATE TABLE IF NOT EXISTS " + table_name + "(\n"+
+                                "   "+String.join(",",coloums)+",\n"+
+                                "   "+(DBCore.getFKey(foreignkey, dbConfig,databasename)!=null?DBCore.getFKey(foreignkey, dbConfig,databasename)+"\n":"")+
+                                "   UNIQUE KEY ("+String.join(",",unique)+")\n" +
+                                ");";
+            }else {
+                CREATE_CONTACTS_TABLE=
+                        "CREATE TABLE IF NOT EXISTS " + table_name + "(\n"+
+                                "   "+String.join(",",coloums)+",\n"+
+                                "   "+(DBCore.getFKey(foreignkey,dbConfig,databasename)!=null?DBCore.getFKey(foreignkey,dbConfig,databasename)+"\n":"")+
+                                ");";
+            }
+        }
+
+        if(dbConfig.getViewQuery())
+            System.out.println(CREATE_CONTACTS_TABLE);
+
+        boolean ret=false;
+        Statement stmt=null;
+        Connection con=null;
+        try{
+            Class.forName("com.mysql.jdbc.Driver");
+            con=DriverManager.getConnection("jdbc:mysql://"+dbConfig.getHost()+":"+dbConfig.getPort()+"/"+databasename,dbConfig.getUsername(),dbConfig.getPassword());
+            stmt =con.createStatement();
+            stmt.execute(CREATE_CONTACTS_TABLE);
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally {
+            try{
+                if(con!=null) {
+                    if(stmt!=null) {
+                        ret=true;
+                        con.close();
+                    }
+                }
+            }catch(SQLException se){
+                se.printStackTrace();
+            }
+        }
+        return ret;
+    }
+
     @Override
     public DBInsert insert(T getEntity) {
         DBInsert dbInsert=new DBInsert();

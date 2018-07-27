@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 public interface IDB<T> {
      boolean onCreateTable();
-     DBInsert insert(T t);
+     /*DBInsert insert(T t);
      boolean insert(ArrayList<T> tArrayList);
      boolean delete(T t);
      boolean delete(String coloum, String value);
@@ -16,5 +16,5 @@ public interface IDB<T> {
      ArrayList<T> sqlSelect(String sql);
      boolean update(T getEntity);
      boolean preparedStatement(String sql);
-     boolean statement(String sql);
+     boolean statement(String sql);*/
 }

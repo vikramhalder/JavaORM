@@ -1,11 +1,13 @@
 package com.github.vikramhalder.Example;
 
+import com.github.vikramhalder.JavaORM.Annotations.AutoIncrement;
 import com.github.vikramhalder.JavaORM.Annotations.PK;
 import com.github.vikramhalder.JavaORM.DBConfig;
 
 import java.sql.*;
 
 public class DBConn {
+    @AutoIncrement
     @PK
     private int id;
 
