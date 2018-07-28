@@ -4,8 +4,8 @@ import com.github.vikramhalder.JavaORM.Annotations.*;
 
 import java.util.Date;
 
-
-public class Ent {
+//@StorageEngine("MyISAM")
+public class User {
     @AutoIncrement
     @PK
     @Coloum("id")
@@ -19,8 +19,6 @@ public class Ent {
     @ColumnType("timestamp")
     @Default("CURRENT_TIMESTAMP")
     private Date date;
-    @ForeignKey
-    private Person person;
 
     public int getId() {
         return ids;

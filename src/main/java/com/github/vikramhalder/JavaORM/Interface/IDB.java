@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 public interface IDB<T> {
      boolean onCreateTable();
-     /*DBInsert insert(T t);
-     boolean insert(ArrayList<T> tArrayList);
+     DBInsert insert(T t);
+     /*boolean insert(ArrayList<T> tArrayList);
      boolean delete(T t);
      boolean delete(String coloum, String value);
      ArrayList<T> getAll();

@@ -16,35 +16,13 @@ class Entity {
     }
 }
 
-class DBProperty {
-    public String _type;
-    public FieldName _fieldName;
-    public Object _value;
-    public String _modifier;
-    public boolean _pk=false;
-    public String _default;
-    public boolean _isDefault=false;
-    public boolean _autoincrement=false;
-    public boolean _qunique=false;
-    public boolean _notNull=false;
-    public boolean _isForeignkey=false;
-    public DBTable _foreignkey;
-}
-
 class FieldName{
     public String realname;
     public String mapname;
 }
 
-class DBTable{
-    public Class clazz;
-    public FieldName classname;
-    public ArrayList<DBProperty> properties;
-    public String _modifier;
-}
-
 class TableValue{
-    public String storage_engine;
+    public String storage_engine="INNODB";
     public FieldName table_name;
     public Class class_object;
     public Item primary_key;

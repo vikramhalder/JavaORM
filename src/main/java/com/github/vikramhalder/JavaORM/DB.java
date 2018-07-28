@@ -1,8 +1,6 @@
 package  com.github.vikramhalder.JavaORM;
 
 import com.github.vikramhalder.JavaORM.DBCore;
-import com.github.vikramhalder.JavaORM.DBProperty;
-import com.github.vikramhalder.JavaORM.DBTable;
 import com.github.vikramhalder.JavaORM.Entity;
 import com.github.vikramhalder.JavaORM.Error.NotNullException;
 import com.github.vikramhalder.JavaORM.Interface.IDB;
@@ -16,18 +14,31 @@ public class DB<T> implements IDB<T> {
     private String databasename; ;
     private String tablename ;
     private TableValue tableValue;
-    private Class<T> entityclass;
+    private Class<?> entityclass;
     private T entity,entity_temp;
     private Item pk_id=null;
     private DBConfig dbConfig;
 
-    public DB(Class<T> entityclass, String databasename) {
+    public DB(T entity, String databasename) {
         this.databasename= databasename;
-        this.tableValue= DBCore.getTableValue(entityclass);
-        this.entityclass=entityclass;
+        this.tableValue= DBCore.getTableValue(entity,entity.getClass());
+        this.entityclass=entity.getClass();
         try {
             this.tablename=tableValue.table_name.mapname;
-            this.entity = entityclass.newInstance();
+            this.entity =entity;
+            this.entity_temp=entity;
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+    }
+    public DB(T entity, DBConfig dbConfig, String databasename) {
+        this.dbConfig=dbConfig;
+        this.databasename= databasename;
+        this.tableValue= DBCore.getTableValue(entity,entity.getClass());
+        this.entityclass=entityclass.getClass();
+        try {
+            this.tablename=tableValue.table_name.mapname;
+            this.entity =entity;
             this.entity_temp=entity;
         }catch (Exception ex){
             ex.printStackTrace();
@@ -44,96 +55,22 @@ public class DB<T> implements IDB<T> {
         return DBCreate.tableCreate(databasename,tableValue,dbConfig);
     }
 
-
-/*
     @Override
     public DBInsert insert(T getEntity) {
-        DBInsert dbInsert=new DBInsert();
-        boolean notnull=false;
-        ArrayList<String> coloums=new ArrayList<>();
-        ArrayList<String> values=new ArrayList<>();
-
-        for(Field field:getEntity.getClass().getDeclaredFields())
-        {
-            ArrayList<DBTable> foreignkey=new ArrayList<>();
-            field.setAccessible(true);
-            for(DBProperty DBProperty :DB_TABLE.properties){
-                if(DBProperty._fieldName!=null) {
-                    if (DBProperty._fieldName.realname.equals(field.getName())) {
-                        try {
-                            if(!DBProperty._autoincrement) {
-                                if(field.get(getEntity)!=null) {
-                                    coloums.add(DBProperty._fieldName.mapname);
-                                    if(DBProperty._foreignkey!=null){
-                                        System.out.println("........."+DBProperty._foreignkey.clazz);
-                                        foreignkey.add(DBProperty._foreignkey);
-                                        for(DBProperty fdb_property:DBProperty._foreignkey.properties){
-                                            DBInsert dbInsert1=insert((T) DBProperty._value.getClass());
-                                            System.out.println(dbInsert1.isOk());
-                                            System.out.println(dbInsert1.getId());
-                                            System.out.println(dbInsert1.getMessage());
-                                        }
-                                    }else {
-                                        values.add("'" + (String.valueOf(field.get(getEntity)) != null ? field.get(getEntity) + "" : "NULL").replace("'", "''") + "'");
-                                    }
-                                    }else{
-                                    if(DBProperty._notNull){
-                                        notnull=true;
-                                        throw new NotNullException(DBProperty._fieldName.realname+"  null value not support");
-                                    }
-                                }
-                            }
-                        } catch (Exception esx) {
-                            esx.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
-
-        boolean ret=false;
-        if(!notnull) {
-            String sql = "insert into " + tablename + "(" + String.join(",", coloums) + ") values " + "(" + String.join(",", values) + ")";
-            sql = sql.replace("'null'", "NULL");
-            if (dbConfig.getViewQuery())
-                System.out.println(sql);
-
-            PreparedStatement preparedStatement = null;
-            Connection con = null;
-            try {
-                Class.forName("com.mysql.jdbc.Driver");
-                con = DriverManager.getConnection("jdbc:mysql://" + dbConfig.getHost() + ":" + dbConfig.getPort() + "/" + databasename, dbConfig.getUsername(), dbConfig.getPassword());
-                preparedStatement = con.prepareStatement(sql);
-                preparedStatement.execute();
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (con != null) {
-                        if (preparedStatement != null) {
-                            try {
-                                ResultSet tableKeys = preparedStatement.getGeneratedKeys();
-                                tableKeys.next();
-                                int autoGeneratedID = tableKeys.getInt(1);
-                                dbInsert.setOk(true);
-                                dbInsert.setId(autoGeneratedID);
-                                con.close();
-                            }catch (Exception ex){
-                                dbInsert.setOk(true);
-                                dbInsert.setId(0);
-                                dbInsert.setMessage("Insert successfull. But failed to get generated keys");
-                                con.close();
-                            }
-                        }
-                    }
-                } catch (SQLException se) {
-                    se.printStackTrace();
-                }
-            }
-        }
+        this.tableValue=DBCore.getTableValue( getEntity, getEntity.getClass());
+        DBInsert dbInsert = DBInsert.insert(databasename,tableValue,dbConfig,getEntity.getClass());
         return dbInsert;
     }
-    @Override
+
+//    @Override
+//    public DBInsert insert(T getEntity) {
+//        TableValue tv=DBCore.getTableValue(getEntity.getClass());
+//        DBInsert dbInsert=DBInsert.insert(databasename,tv,dbConfig,getEntity.getClass());
+//
+//        return dbInsert;
+//    }
+
+/*    @Override
     public boolean insert(ArrayList<T> tArrayList) {
         boolean notnull=false;
         ArrayList<String> coloums=new ArrayList<>();
@@ -540,4 +477,5 @@ public class DB<T> implements IDB<T> {
             ex.printStackTrace();
         }
     }*/
+
 }

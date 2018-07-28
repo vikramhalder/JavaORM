@@ -17,22 +17,22 @@ class DBCreate {
         ArrayList<String> table_all_line=new ArrayList<>();
         if(tableValue.primary_key!=null){
             if(tableValue.primary_key._autoincrement)
-                table_all_line.add(tableValue.primary_key._fieldname.mapname + " int NOT NULL AUTO_INCREMENT\n");
+                table_all_line.add(tableValue.primary_key._fieldname.mapname + " int NOT NULL AUTO_INCREMENT");
             else
-                table_all_line.add(tableValue.primary_key._fieldname.mapname + " "+DBCore.ColoumType(tableValue.primary_key._type,tableValue.primary_key._type)+" NOT NULL\n");
+                table_all_line.add(tableValue.primary_key._fieldname.mapname + " "+DBCore.ColoumType(tableValue.primary_key._type,tableValue.primary_key._type)+" NOT NULL");
         }
         if(tableValue.no_annotations.size()>0){
             for(Item item : tableValue.no_annotations){
                 if(item._notnull)
                     if(item._default!=null)
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                     else
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"  NOT NULL\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"  NOT NULL");
                 else
                 if(item._default!=null)
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                 else
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"");
             }
         }
         if(tableValue.unique.size()>0){
@@ -40,14 +40,14 @@ class DBCreate {
                 Item item=customClass.items;
                 if(item._notnull)
                     if(item._default!=null)
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                     else
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" NOT NULL\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" NOT NULL");
                 else
                 if(item._default!=null)
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                 else
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"");
             }
         }
         if(tableValue.one_to_one.size()>0){
@@ -55,14 +55,14 @@ class DBCreate {
                 Item item=customClass.items;
                 if(item._notnull)
                     if(item._default!=null)
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                     else
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" NOT NULL\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" NOT NULL");
                 else
                 if(item._default!=null)
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                 else
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"");
             }
         }
         if(tableValue.one_to_many.size()>0){
@@ -70,14 +70,14 @@ class DBCreate {
                 Item item=customClass.items;
                 if(item._notnull)
                     if(item._default!=null)
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                     else
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" NOT NULL\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" NOT NULL");
                 else
                 if(item._default!=null)
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                 else
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"");
             }
         }
         if(tableValue.many_to_many.size()>0){
@@ -85,14 +85,14 @@ class DBCreate {
                 Item item=customClass.items;
                 if(item._notnull)
                     if(item._default!=null)
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                     else
-                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" NOT NULL\n");
+                        table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" NOT NULL");
                 else
                 if(item._default!=null)
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                 else
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(item._type,item._columetype)+"");
             }
         }
         if(tableValue.foreign_key.size()>0){
@@ -101,27 +101,27 @@ class DBCreate {
                 Item item = customClass.items;
                 if (item._notnull)
                     if (item._default != null)
-                        table_all_line.add( item._fieldname.mapname + " " + DBCore.ColoumType(tv.primary_key._type,tv.primary_key._columetype) + " DEFAULT '" + item._default + "'\n");
+                        table_all_line.add( item._fieldname.mapname + " " + DBCore.ColoumType(tv.primary_key._type,tv.primary_key._columetype) + " DEFAULT '" + item._default + "'");
                     else
-                        table_all_line.add( item._fieldname.mapname + " " + DBCore.ColoumType(tv.primary_key._type,tv.primary_key._columetype) + " NOT NULL\n");
+                        table_all_line.add( item._fieldname.mapname + " " + DBCore.ColoumType(tv.primary_key._type,tv.primary_key._columetype) + " NOT NULL");
                 else
                 if(item._default!=null)
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(tv.primary_key._type,tv.primary_key._columetype)+" DEFAULT "+DBCore.defaultValue(item._type,item._default)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(tv.primary_key._type,tv.primary_key._columetype)+" DEFAULT "+DBCore.DefaultType(item._type,item._default)+"");
                 else
-                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(tv.primary_key._type,tv.primary_key._columetype)+"\n");
+                    table_all_line.add(item._fieldname.mapname + " "+DBCore.ColoumType(tv.primary_key._type,tv.primary_key._columetype)+"");
             }
         }
         if(tableValue.foreign_key.size()>0){
             for(CustomClass customClass : tableValue.foreign_key){
                 TableValue tv=customClass.table_value;
                 Item item=customClass.items;
-                IDB<String> d=new DB<String>(item._classobject,databasename).Config(dbConfig);;
+                IDB<String> d=new DB<String>(Entity.createInstance(item._classobject),databasename).Config(dbConfig);;
                 d.onCreateTable();
-                table_all_line.add( "FOREIGN KEY ("+item._fieldname.mapname+") REFERENCES "+tv.table_name.mapname+"("+tv.primary_key._fieldname.mapname+")\n");
+                table_all_line.add( "FOREIGN KEY ("+item._fieldname.mapname+") REFERENCES "+tv.table_name.mapname+"("+tv.primary_key._fieldname.mapname+")");
             }
         }
         if(tableValue.primary_key!=null){
-            table_all_line.add("PRIMARY KEY ("+tableValue.primary_key._fieldname.mapname+")\n");
+            table_all_line.add("PRIMARY KEY ("+tableValue.primary_key._fieldname.mapname+")");
         }
         if(tableValue.unique.size()>0){
             ArrayList<String> unique=new ArrayList<>();
@@ -131,12 +131,12 @@ class DBCreate {
                 unique.add(item._fieldname.mapname);
 
             }
-            table_all_line.add( "UNIQUE KEY ("+String.join(",",unique)+")\n");
+            table_all_line.add( "UNIQUE KEY ("+String.join(",",unique)+")");
         }
 
-
+        String storage_engine=tableValue.storage_engine!=null?"ENGINE="+tableValue.storage_engine:"ENGINE=INNODB";
         String CREATE_CONTACTS_TABLE=
-                "CREATE TABLE IF NOT EXISTS " + tableValue.table_name.mapname + "(\n"+ String.join(",",table_all_line) +");\n\n\n\n\n";
+                "CREATE TABLE IF NOT EXISTS " + tableValue.table_name.mapname + "(\n"+ String.join(",\n",table_all_line) +"\n)"+storage_engine+";";
 
         if(dbConfig.getViewQuery())
             System.out.println(CREATE_CONTACTS_TABLE);
